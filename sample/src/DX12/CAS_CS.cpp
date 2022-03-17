@@ -171,7 +171,7 @@ namespace CAS_SAMPLE_DX12
                 {
                     m_casPackedSharpenOnly.Draw(pCommandList, cbHandle, &m_outputTextureUav, &inputSrv, dispatchX, dispatchY, 1);
                 }
-                else if (casState == CAS_State_Upsample)
+                else if (casState == CAS_State_Upsample || casState == CAS_State_Downsample)
                 {
                     m_casPackedFast.Draw(pCommandList, cbHandle, &m_outputTextureUav, &inputSrv, dispatchX, dispatchY, 1);
                 }
@@ -182,7 +182,7 @@ namespace CAS_SAMPLE_DX12
                 {
                     m_casSharpenOnly.Draw(pCommandList, cbHandle, &m_outputTextureUav, &inputSrv, dispatchX, dispatchY, 1);
                 }
-                else if (casState == CAS_State_Upsample)
+                else if (casState == CAS_State_Upsample || casState == CAS_State_Downsample)
                 {
                     m_casFast.Draw(pCommandList, cbHandle, &m_outputTextureUav, &inputSrv, dispatchX, dispatchY, 1);
                 }
@@ -216,8 +216,9 @@ namespace CAS_SAMPLE_DX12
 
     void CAS_Filter::UpdateSharpness(float NewSharpenVal, CAS_State CASState)
     {
-        AF1 outWidth = static_cast<AF1>((CASState == CAS_State_Upsample) ? m_width : m_renderWidth);
-        AF1 outHeight = static_cast<AF1>((CASState == CAS_State_Upsample) ? m_height : m_renderHeight);
+        bool isScaled = CASState == CAS_State_Upsample || CASState == CAS_State_Downsample || CASState == CAS_State_Downsample_NoCas;
+        AF1 outWidth = static_cast<AF1>(isScaled ? m_width : m_renderWidth);
+        AF1 outHeight = static_cast<AF1>(isScaled ? m_height : m_renderHeight);
 
         CasSetup(reinterpret_cast<AU1*>(&m_consts.Const0), reinterpret_cast<AU1*>(&m_consts.Const1), m_sharpenVal, static_cast<AF1>(m_renderWidth), 
                  static_cast<AF1>(m_renderHeight), outWidth, outHeight);
@@ -226,22 +227,31 @@ namespace CAS_SAMPLE_DX12
 
     static const ResolutionInfo s_CommonResolutions[] =
     {
+        { "480p 16:9", 640, 360 },
         { "480p", 640, 480 },
         { "720p", 1280, 720 },
         { "1080p", 1920, 1080 },
         { "1440p", 2560, 1440 },
     };
 
-    void CAS_Filter::GetSupportedResolutions(uint32_t displayWidth, uint32_t displayHeight, std::vector<ResolutionInfo>& supportedList)
+    void CAS_Filter::GetSupportedResolutions(uint32_t displayWidth, uint32_t displayHeight, std::vector<ResolutionInfo>& supportedList, bool isDownsample)
     {
         // Check which of the fixed resolutions we support rendering to with CAS enabled
         for (uint32_t iRes = 0; iRes < _countof(s_CommonResolutions); ++iRes)
         {
             ResolutionInfo currResolution = s_CommonResolutions[iRes];
-            if (CasSupportScaling(static_cast<AF1>(displayWidth), static_cast<AF1>(displayHeight), static_cast<AF1>(currResolution.Width), static_cast<AF1>(currResolution.Height)) &&
-                currResolution.Width < displayWidth && currResolution.Height < displayHeight)
-            {
-                supportedList.push_back(currResolution);
+            if (!isDownsample) {
+                if (CasSupportScaling(static_cast<AF1>(displayWidth), static_cast<AF1>(displayHeight), static_cast<AF1>(currResolution.Width), static_cast<AF1>(currResolution.Height)) &&
+                    currResolution.Width < displayWidth && currResolution.Height < displayHeight)
+                {
+                    supportedList.push_back(currResolution);
+                }
+            }
+            else {
+                if (currResolution.Width < displayWidth && currResolution.Height < displayHeight)
+                {
+                    supportedList.push_back(currResolution);
+                }
             }
         }
 

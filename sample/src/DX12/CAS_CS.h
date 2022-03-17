@@ -30,6 +30,8 @@ namespace CAS_SAMPLE_DX12
         CAS_State_NoCas,
         CAS_State_Upsample,
         CAS_State_SharpenOnly,
+        CAS_State_Downsample,
+        CAS_State_Downsample_NoCas,
     };
 
     struct ResolutionInfo
@@ -65,7 +67,7 @@ namespace CAS_SAMPLE_DX12
 
         void UpdateSharpness(float sharpenControl, CAS_State CASState);
 
-        static void GetSupportedResolutions(uint32_t displayWidth, uint32_t displayHeight, std::vector<ResolutionInfo>& supportedList);
+        static void GetSupportedResolutions(uint32_t displayWidth, uint32_t displayHeight, std::vector<ResolutionInfo>& supportedList, bool isDownsample = false);
 
     private:
         Device                         *m_pDevice;

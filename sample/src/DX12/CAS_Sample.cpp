@@ -333,7 +333,10 @@ void CAS_Sample::OnRender()
         }
 
         std::vector<ResolutionInfo> supportedResolutions = {};
-        CAS_Filter::GetSupportedResolutions(m_Width, m_Height, supportedResolutions);
+        const auto StateIsDownsample = [](CAS_State state) {
+            return state == CAS_State_Downsample || state == CAS_State_Downsample_NoCas;
+        };
+        CAS_Filter::GetSupportedResolutions(m_Width, m_Height, supportedResolutions, StateIsDownsample(m_state.CASState));
         auto itemsGetter = [](void* data, int idx, const char** outText)
         {
             ResolutionInfo* resolutions = reinterpret_cast<ResolutionInfo*>(data);
@@ -355,6 +358,8 @@ void CAS_Sample::OnRender()
             "No Cas",
             "Cas Upsample",
             "Cas Sharpen Only",
+            "Cas Downsample",
+            "Downsample Only",
         };
         ImGui::Combo("Cas Options", (int*)&m_state.CASState, casItemNames, _countof(casItemNames));
 
@@ -372,15 +377,25 @@ void CAS_Sample::OnRender()
         {
             m_state.CASState = CAS_State_SharpenOnly;
         }
-
+        else if (io.KeysDownDuration['R'] == 0.0f)
+        {
+            m_state.CASState = CAS_State_Downsample;
+        }
+        else if (io.KeysDownDuration['T'] == 0.0f)
+        {
+            m_state.CASState = CAS_State_Downsample_NoCas;
+        }
+        
         if (oldDisplayMode != m_currDisplayMode || oldCasState != m_state.CASState)
         {
-            m_state.renderWidth = supportedResolutions[m_currDisplayMode].Width;
-            m_state.renderHeight = supportedResolutions[m_currDisplayMode].Height;
+            m_state.renderWidth = StateIsDownsample(m_state.CASState) ? m_Width : supportedResolutions[m_currDisplayMode].Width;
+            m_state.renderHeight = StateIsDownsample(m_state.CASState) ? m_Height : supportedResolutions[m_currDisplayMode].Height;
 
             m_device.GPUFlush();
             m_pNode->OnDestroyWindowSizeDependentResources();
-            m_pNode->OnCreateWindowSizeDependentResources(&m_swapChain, &m_state, m_Width, m_Height);
+            m_pNode->OnCreateWindowSizeDependentResources(&m_swapChain, &m_state,
+                StateIsDownsample(m_state.CASState) ? supportedResolutions[m_currDisplayMode].Width : m_Width,
+                StateIsDownsample(m_state.CASState) ? supportedResolutions[m_currDisplayMode].Height : m_Height);
         }
 
         float newSharpenControl = m_state.sharpenControl;
