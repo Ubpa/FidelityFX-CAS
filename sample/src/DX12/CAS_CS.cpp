@@ -27,6 +27,21 @@
 
 namespace CAS_SAMPLE_DX12
 {
+    bool CAS_State_IsCas(CAS_State state)
+    {
+        return state == CAS_State_Upsample || state == CAS_State_SharpenOnly || state == CAS_State_Downsample;
+    }
+
+    bool CAS_State_IsDownsample(CAS_State state)
+    {
+        return state == CAS_State_Downsample || state == CAS_State_Downsample_NoCas;
+    }
+
+    bool CAS_State_IsScaled(CAS_State state)
+    {
+        return state == CAS_State_Upsample || state == CAS_State_Downsample || state == CAS_State_Downsample_NoCas;
+    }
+
     void CAS_Filter::OnCreate(
         Device *pDevice,
         ResourceViewHeaps      *pResourceViewHeaps,
@@ -216,9 +231,8 @@ namespace CAS_SAMPLE_DX12
 
     void CAS_Filter::UpdateSharpness(float NewSharpenVal, CAS_State CASState)
     {
-        bool isScaled = CASState == CAS_State_Upsample || CASState == CAS_State_Downsample || CASState == CAS_State_Downsample_NoCas;
-        AF1 outWidth = static_cast<AF1>(isScaled ? m_width : m_renderWidth);
-        AF1 outHeight = static_cast<AF1>(isScaled ? m_height : m_renderHeight);
+        AF1 outWidth = static_cast<AF1>(CAS_State_IsScaled(CASState) ? m_width : m_renderWidth);
+        AF1 outHeight = static_cast<AF1>(CAS_State_IsScaled(CASState) ? m_height : m_renderHeight);
 
         CasSetup(reinterpret_cast<AU1*>(&m_consts.Const0), reinterpret_cast<AU1*>(&m_consts.Const1), m_sharpenVal, static_cast<AF1>(m_renderWidth), 
                  static_cast<AF1>(m_renderHeight), outWidth, outHeight);

@@ -608,11 +608,12 @@ void CAS_Renderer::OnRender(State *pState, SwapChain *pSwapChain)
         pCmdLst2->RSSetScissorRects(1, &m_FinalRectScissor);
         pCmdLst2->OMSetRenderTargets(1, pSwapChain->GetCurrentBackBufferRTV(), true, NULL);
 
-        m_CAS.Upscale(pCmdLst2, pState->CASState != CAS_State_NoCas && pState->CASState != CAS_State_Downsample_NoCas, pState->usePackedMath, (CAS_State)pState->CASState, m_Tonemap.GetResource(), m_TonemapSRV);
+        const bool useCas = CAS_State_IsCas(pState->CASState);
+        m_CAS.Upscale(pCmdLst2, useCas, pState->usePackedMath, (CAS_State)pState->CASState, m_Tonemap.GetResource(), m_TonemapSRV);
 
         m_GPUTimer.GetTimeStamp(pCmdLst2, "CAS");
 
-        m_CAS.Draw(pCmdLst2, pState->CASState != CAS_State_NoCas && pState->CASState != CAS_State_Downsample_NoCas, m_Tonemap.GetResource(), m_TonemapSRV);
+        m_CAS.Draw(pCmdLst2, useCas, m_Tonemap.GetResource(), m_TonemapSRV);
     }
 
     // Render HUD  ------------------------------------------------------------------------

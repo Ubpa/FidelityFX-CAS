@@ -333,10 +333,7 @@ void CAS_Sample::OnRender()
         }
 
         std::vector<ResolutionInfo> supportedResolutions = {};
-        const auto StateIsDownsample = [](CAS_State state) {
-            return state == CAS_State_Downsample || state == CAS_State_Downsample_NoCas;
-        };
-        CAS_Filter::GetSupportedResolutions(m_Width, m_Height, supportedResolutions, StateIsDownsample(m_state.CASState));
+        CAS_Filter::GetSupportedResolutions(m_Width, m_Height, supportedResolutions, CAS_State_IsDownsample(m_state.CASState));
         auto itemsGetter = [](void* data, int idx, const char** outText)
         {
             ResolutionInfo* resolutions = reinterpret_cast<ResolutionInfo*>(data);
@@ -388,14 +385,14 @@ void CAS_Sample::OnRender()
         
         if (oldDisplayMode != m_currDisplayMode || oldCasState != m_state.CASState)
         {
-            m_state.renderWidth = StateIsDownsample(m_state.CASState) ? m_Width : supportedResolutions[m_currDisplayMode].Width;
-            m_state.renderHeight = StateIsDownsample(m_state.CASState) ? m_Height : supportedResolutions[m_currDisplayMode].Height;
+            m_state.renderWidth = CAS_State_IsDownsample(m_state.CASState) ? m_Width : supportedResolutions[m_currDisplayMode].Width;
+            m_state.renderHeight = CAS_State_IsDownsample(m_state.CASState) ? m_Height : supportedResolutions[m_currDisplayMode].Height;
 
             m_device.GPUFlush();
             m_pNode->OnDestroyWindowSizeDependentResources();
             m_pNode->OnCreateWindowSizeDependentResources(&m_swapChain, &m_state,
-                StateIsDownsample(m_state.CASState) ? supportedResolutions[m_currDisplayMode].Width : m_Width,
-                StateIsDownsample(m_state.CASState) ? supportedResolutions[m_currDisplayMode].Height : m_Height);
+                CAS_State_IsDownsample(m_state.CASState) ? supportedResolutions[m_currDisplayMode].Width : m_Width,
+                CAS_State_IsDownsample(m_state.CASState) ? supportedResolutions[m_currDisplayMode].Height : m_Height);
         }
 
         float newSharpenControl = m_state.sharpenControl;

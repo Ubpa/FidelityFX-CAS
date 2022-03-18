@@ -34,6 +34,15 @@ namespace CAS_SAMPLE_DX12
         CAS_State_Downsample_NoCas,
     };
 
+    // CAS_State_NoCas, CAS_State_Downsample_NoCas
+    bool CAS_State_IsCas(CAS_State state);
+
+    // CAS_State_Downsample, CAS_State_Downsample_NoCas
+    bool CAS_State_IsDownsample(CAS_State state);
+
+    // CAS_State_Upsample, CAS_State_Downsample, CAS_State_Downsample_NoCas
+    bool CAS_State_IsScaled(CAS_State state);
+
     struct ResolutionInfo
     {
         const char* pName;
